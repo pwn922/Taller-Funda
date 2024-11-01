@@ -27,5 +27,5 @@ gcc -o .\bin\compiler parser.tab.c lexer.yy.c
 ### Ejecutar compilador
 
 ```
-.\bin\compiler.exe .\programa.txt
+.\bin\compiler.exe .\tests\programa.txt
 ```
