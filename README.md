@@ -15,7 +15,7 @@ flex.exe -o .\lexer\lexer.yy.c .\lexer\lexer.l
 ### Generar el analizador sintáctico (Parser)
 
 ```
-bison -d -o .\parser\parser.tab.c .\parser\parser.y
+bison -d -o .\lexer\parser.tab.c .\parser\parser.y
 ```
 
 ### Generar el compilador
