@@ -4,7 +4,7 @@
 
 ### Variables
 
-## Uso
+## Instrucciones de uso:
 
 ### Generar el analizador léxico (Lexer): 
 
