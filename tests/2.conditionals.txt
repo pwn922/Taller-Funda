@@ -1,0 +1,14 @@
+var a = 10;
+var b = 20;
+var mayor = 0;
+var menor = 0;
+if (a > b) {
+    mayor = a;
+    menor = b;
+}
+else {
+    mayor = b;
+    menor = a;
+}
+print(mayor);
+print(menor);
