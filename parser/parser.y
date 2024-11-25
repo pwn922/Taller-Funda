@@ -3,19 +3,35 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+
 extern FILE *yyin;
 void yyerror(const char *s);
 int yylex(void);
 
 #define MAX_VARIABLES 100
+#define MAX_FUNCTIONS 100
+#define MAX_PARAMETERS 10
 
+//Estructura para variables
 typedef struct {
     char *name;
     int value;
 } Variable;
 
+//Estructura para funciones
+typedef struct {
+    char *name;
+    struct ASTNode **parameters; // Lista de parámetros como nodos
+    int param_count;
+    struct ASTNode *body;
+} Function;
+
 Variable variables[MAX_VARIABLES];
 int var_count = 0;
+
+Function functions[MAX_FUNCTIONS];
+int func_count = 0;
 
 typedef enum {
     NODE_TYPE_NUMBER,
@@ -30,6 +46,8 @@ typedef enum {
     NODE_TYPE_WHILE,
     NODE_TYPE_FOR,
     NODE_TYPE_STRING,
+    NODE_TYPE_FUNCTION,
+    NODE_TYPE_CALL,
 } ASTNodeType;
 
 typedef struct ASTNode {
@@ -37,6 +55,24 @@ typedef struct ASTNode {
     union {
         int value; // Para NODE_TYPE_NUMBER
         char *name; // Para NODE_TYPE_IDENTIFIER y otros que lo usen
+        struct {
+            struct ASTNode **parameters;
+            int param_count;
+        } parameter_list;
+        struct {
+            struct ASTNode *expression;
+        } return_stmt;
+        struct {
+            struct ASTNode **args;
+            int arg_count;
+            char *name;
+        } call;
+        struct {
+            char *name;
+            struct ASTNode **parameters;
+            int param_count;
+            struct ASTNode *body;
+        } function;
         struct {
             char *name;
             struct ASTNode *value;
@@ -69,6 +105,37 @@ typedef struct ASTNode {
         char *string_value; // Para NODE_TYPE_STRING
     };
 } ASTNode;
+Function *get_function(const char *name);  // Declarar funciones
+int evaluate_ast(ASTNode *node);
+void add_function(Function func);
+
+// Creación de nodos para funciones y sus llamadas
+ASTNode *create_function_node(char *name, ASTNode **parameters, int param_count, ASTNode *body) {
+    ASTNode *node = malloc(sizeof(ASTNode));
+    node->type = NODE_TYPE_FUNCTION;
+    node->function.name = strdup(name);
+    node->function.parameters = parameters;
+    node->function.param_count = param_count;
+    node->function.body = body;
+    return node;
+}
+
+ASTNode *create_call_node(char *name, ASTNode **args, int arg_count) {
+    ASTNode *node = malloc(sizeof(ASTNode));
+    node->type = NODE_TYPE_CALL;
+    node->call.name = strdup(name);
+    node->call.args = args;
+    node->call.arg_count = arg_count;
+    return node;
+}
+
+// Creación de nodo para return
+ASTNode *create_return_node(ASTNode *expression) {
+    ASTNode *node = malloc(sizeof(ASTNode));
+    node->type = NODE_TYPE_RETURN;
+    node->return_stmt.expression = expression;
+    return node;
+}
 
 ASTNode *create_for_node(ASTNode *init, ASTNode *condition, ASTNode *increment, ASTNode *body) {
     
@@ -221,6 +288,28 @@ void set_variable_value(char *name, int value) {
     var_count++;
 }
 
+// Evaluación de funciones
+int evaluate_function_call(ASTNode *call_node) {
+    Function *func = get_function(call_node->call.name);
+    if (!func) {
+        fprintf(stderr, "Error: Función '%s' no definida.\n", call_node->call.name);
+        return 0;
+    }
+    if (func->param_count != call_node->call.arg_count) {
+        fprintf(stderr, "Error: Número incorrecto de argumentos para '%s'.\n", func->name);
+        return 0;
+    }
+
+    // Evaluar argumentos y asignar a parámetros
+    for (int i = 0; i < func->param_count; i++) {
+        int arg_value = evaluate_ast(call_node->call.args[i]);
+        set_variable_value(func->parameters[i]->name, arg_value);
+    }
+
+    // Ejecutar el cuerpo de la función
+    return evaluate_ast(func->body);
+}
+
 int evaluate_ast(ASTNode *node) {
     if (node == NULL) {
         return 0; // Retorna 0 si el nodo es NULL.
@@ -300,6 +389,11 @@ int evaluate_ast(ASTNode *node) {
             return result;
         }
 
+        case NODE_TYPE_CALL:
+            return evaluate_function_call(node);
+        case NODE_TYPE_RETURN:
+            return evaluate_ast(node->return_stmt.expression);
+
         default:
             fprintf(stderr, "Error: Tipo de nodo desconocido.\n");
             return 0;
@@ -359,14 +453,17 @@ void execute_ast(ASTNode *node) {
     int ival;
     char *sval;
     struct ASTNode *node;
+    struct ASTNode **node_list;
 }
 
 %token <sval> IDENTIFIER
 %token <ival> NUMBER
+%token FUNCTION RETURN
 %token WHILE FOR IF ELSE PRINT TRUE FALSE VAR
 %token EQUAL NOT_EQUAL LESS GREATER LESS_EQUAL GREATER_EQUAL ASSIGN
 
-%type <node> expression line block statement_list program
+%type <node> expression line block statement_list program function_decl call
+%type <node_list> args
 
 %left EQUAL NOT_EQUAL LESS GREATER LESS_EQUAL GREATER_EQUAL
 %left '+' '-'
@@ -382,11 +479,13 @@ program:
         execute_ast($2);
         free_ast($2);
     }
+    | function_decl { /* Nueva regla para funciones */ }
 ;
 
 line:
     VAR IDENTIFIER ASSIGN expression ';' { $$ = create_assignment_node($2, $4); }
     | IDENTIFIER ASSIGN expression ';'   { $$ = create_assignment_node($1, $3); }
+    | call ';' { execute_ast($1); free_ast($1); }
     | IF '(' expression ')' block
       {
           $$ = create_if_node($3, $5, NULL); // Caso sin bloque else
@@ -432,6 +531,7 @@ statement_list:
 expression:
     NUMBER  { $$ = create_number_node($1); }
     | IDENTIFIER  { $$ = create_identifier_node($1); }
+    | call { $$ = $1; }
     | expression '+' expression   { $$ = create_binary_op_node('+', $1, $3); }
     | expression '-' expression   { $$ = create_binary_op_node('-', $1, $3); }
     | expression '*' expression   { $$ = create_binary_op_node('*', $1, $3); }
@@ -443,6 +543,33 @@ expression:
     | expression LESS_EQUAL expression { $$ = create_binary_op_node('l', $1, $3); }
     | expression GREATER_EQUAL expression { $$ = create_binary_op_node('g', $1, $3); }
     | '(' expression ')'   { $$ = $2; }
+;
+
+function_decl:
+    FUNCTION IDENTIFIER '(' args ')' block {
+        $$ = create_function_node($2, $4, (*$4).block.statement_count, $6);
+        Function func = { strdup($2), $4->block.statements, $4->block.statement_count, $6 };
+        add_function(func);
+    }
+;
+
+call:
+    IDENTIFIER '(' args ')' {
+        $$ = create_call_node($1, $3->block.statements, $3->block.statement_count);
+    }
+;
+
+args:
+    IDENTIFIER { 
+        $$ = create_block_node($1, 1); 
+    }
+    | args ',' IDENTIFIER {
+        int count = (*$1).block.statement_count;
+        (*$1).block.statements = realloc((*$1).block.statements, sizeof(ASTNode *) * (count + 1));
+        (*$1).block.statements[count] = $3;
+        (*$1).block.statement_count++;
+        $$ = $1;
+    }
 ;
 
 %%

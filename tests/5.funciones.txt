@@ -1,0 +1,7 @@
+function suma(a, b) {
+    return a + b;
+}
+
+var resultado;
+resultado = suma(5, 7);       // Llamada a función suma
+print(resultado);             // Debería imprimir 12

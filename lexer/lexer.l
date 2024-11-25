@@ -1,5 +1,6 @@
 %{
 #include "parser.tab.h"
+#include <string.h> //Para strdup
 %}
 
 %%
@@ -12,6 +13,8 @@
 "false"       { return FALSE; }
 "while"       { return WHILE; }
 "for"         { return FOR; }
+"function"    { return FUNCTION; }  // Nuevo token para definir funciones
+"return"      { return RETURN; }    // Nuevo token para retornar valores
 
 [0-9]+        { yylval.ival = atoi(yytext); return NUMBER; }
 [a-zA-Z_][a-zA-Z_0-9]*   { yylval.sval = strdup(yytext); return IDENTIFIER; }
