@@ -44,7 +44,7 @@ gcc -o .\bin\compiler.exe .\output\parser.tab.c .\output\lexer.yy.c
 #### CMD
 
 ```
-.\bin\compiler.exe < .\tests\programa.txt
+.\bin\compilador.exe < .\tests\programa.txt
 ```
 
 #### Powershell (Alternativa)
