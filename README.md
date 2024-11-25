@@ -36,7 +36,7 @@ bison -d -o .\output\parser.tab.c .\parser\parser.y
 ### Generar el compilador
 
 ```
-gcc -o .\bin\compiler.exe .\output\parser.tab.c .\output\lexer.yy.c
+gcc -o .\bin\compilador.exe .\output\parser.tab.c .\output\lexer.yy.c
 ```
 
 ### Ejecutar compilador
