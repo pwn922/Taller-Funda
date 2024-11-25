@@ -6,6 +6,21 @@
 
 ## Instrucciones de uso:
 
+### Crear carpeta output
+
+#### CMD
+
+```
+mkdir output
+```
+
+#### Powershell (Alternative)
+
+```
+New-Item -ItemType Directory -Name output
+```
+
+
 ### Generar el analizador léxico (Lexer): 
 
 ```
@@ -26,6 +41,15 @@ gcc -o .\bin\compiler.exe .\output\parser.tab.c .\output\lexer.yy.c
 
 ### Ejecutar compilador
 
+#### CMD
+
 ```
 .\bin\compiler.exe < .\tests\programa.txt
 ```
+
+#### Powershell (Alternative)
+
+```
+Get-Content .\tests\programa.txt | .\bin\compilador.exe
+```
+
