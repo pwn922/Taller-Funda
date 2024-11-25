@@ -14,7 +14,7 @@
 mkdir output
 ```
 
-#### Powershell (Alternative)
+#### Powershell (Alternativa)
 
 ```
 New-Item -ItemType Directory -Name output
@@ -47,7 +47,7 @@ gcc -o .\bin\compiler.exe .\output\parser.tab.c .\output\lexer.yy.c
 .\bin\compiler.exe < .\tests\programa.txt
 ```
 
-#### Powershell (Alternative)
+#### Powershell (Alternativa)
 
 ```
 Get-Content .\tests\programa.txt | .\bin\compilador.exe
