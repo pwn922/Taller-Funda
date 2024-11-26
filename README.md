@@ -92,7 +92,7 @@ El archivo `lexer.l` tiene una estructura dividida en tres secciones principales
 
 Se uso Bison para definir la gramática del lenguaje en un archivo `parser.y` y generar un analizador sintáctico. Este analizador produce un árbol de sintaxis abstracta (AST). Cada nodo del árbol corresponde a una construcción del lenguaje, como expresiones, declaraciones o sentencias. 
 
-El archivo parser.y tiene una estructura dividida en varias secciones:
+El archivo `parser.y` tiene una estructura dividida en varias secciones:
 
 1. Definición de la gramática: Aquí se definen las reglas de producción que determinan cómo se forman las construcciones del lenguaje, como asignaciones, condicionales, bucles, etc. Estas reglas procesan las entradas y las convierten en nodos del AST.
 2. Representación del AST: El AST se representa mediante la estructura ASTNode, que puede tener varios tipos de nodos, incluyendo:
