@@ -48,6 +48,7 @@ typedef enum {
     NODE_TYPE_STRING,
     NODE_TYPE_FUNCTION,
     NODE_TYPE_CALL,
+    NODE_TYPE_VARIABLE,
 } ASTNodeType;
 
 typedef struct ASTNode {
@@ -109,6 +110,30 @@ Function *get_function(const char *name);  // Declarar funciones
 int evaluate_ast(ASTNode *node);
 void add_function(Function func);
 
+
+int node_list_count(ASTNode **list) {
+    int count = 0;
+    while (list[count] != NULL) count++;
+    return count;
+}
+
+Function *get_function(const char *name) {
+    for (int i = 0; i < func_count; i++) {
+        if (strcmp(functions[i].name, name) == 0) {
+            return &functions[i];
+        }
+    }
+    return NULL;
+}
+
+void add_function(Function func) {
+    if (func_count >= MAX_FUNCTIONS) {
+        fprintf(stderr, "Error: Número máximo de funciones alcanzado.\n");
+        return;
+    }
+    functions[func_count++] = func;
+}
+
 // Creación de nodos para funciones y sus llamadas
 ASTNode *create_function_node(char *name, ASTNode **parameters, int param_count, ASTNode *body) {
     ASTNode *node = malloc(sizeof(ASTNode));
@@ -118,6 +143,35 @@ ASTNode *create_function_node(char *name, ASTNode **parameters, int param_count,
     node->function.param_count = param_count;
     node->function.body = body;
     return node;
+}
+
+ASTNode *create_variable_node(char *name) {
+    ASTNode *node = malloc(sizeof(ASTNode));
+    node->type = NODE_TYPE_VARIABLE;
+    node->name = strdup(name);
+    return node;
+}
+
+int create_variable(char *name) {
+    // Verificar si la variable ya existe
+    for (int i = 0; i < var_count; i++) {
+        if (strcmp(variables[i].name, name) == 0) {
+            // Si ya existe, devolver su valor
+            return variables[i].value;
+        }
+    }
+
+    // Si no existe, agregar la nueva variable al arreglo
+    if (var_count < 100) {
+        variables[var_count].name = strdup(name);  // Copiar el nombre de la variable
+        variables[var_count].value = 0;  // Inicializar el valor de la nueva variable a 0
+        var_count++;
+        return 0;  // Retornar el valor de la nueva variable (0 por defecto)
+    } else {
+        // Si el arreglo está lleno, retornar un valor especial (error)
+        fprintf(stderr, "Error: No hay espacio suficiente para crear más variables.\n");
+        return -1;
+    }
 }
 
 ASTNode *create_call_node(char *name, ASTNode **args, int arg_count) {
@@ -353,6 +407,9 @@ int evaluate_ast(ASTNode *node) {
             return value;
         }
 
+        case NODE_TYPE_VARIABLE:
+            return create_variable(node->name);
+
         case NODE_TYPE_IF: {
             int condition_value = evaluate_ast(node->if_stmt.condition);
             if (condition_value) {
@@ -483,9 +540,11 @@ program:
 ;
 
 line:
-    VAR IDENTIFIER ASSIGN expression ';' { $$ = create_assignment_node($2, $4); }
-    | IDENTIFIER ASSIGN expression ';'   { $$ = create_assignment_node($1, $3); }
+    VAR IDENTIFIER ';' { $$ = create_variable_node($2); }
+    | VAR IDENTIFIER ASSIGN expression ';' { $$ = create_assignment_node($2, $4); }
+    | IDENTIFIER ASSIGN expression ';' { $$ = create_assignment_node($1, $3); }
     | call ';' { execute_ast($1); free_ast($1); }
+    | RETURN expression ';' { $$ = create_return_node($2); }
     | IF '(' expression ')' block
       {
           $$ = create_if_node($3, $5, NULL); // Caso sin bloque else
@@ -547,27 +606,26 @@ expression:
 
 function_decl:
     FUNCTION IDENTIFIER '(' args ')' block {
-        $$ = create_function_node($2, $4, (*$4).block.statement_count, $6);
-        Function func = { strdup($2), $4->block.statements, $4->block.statement_count, $6 };
+        $$ = create_function_node($2, $4, node_list_count($4), $6);
+        Function func = { strdup($2), $4, node_list_count($4), $6 };
         add_function(func);
     }
 ;
 
 call:
     IDENTIFIER '(' args ')' {
-        $$ = create_call_node($1, $3->block.statements, $3->block.statement_count);
+        $$ = create_call_node($1, $3, node_list_count($3));
     }
 ;
 
 args:
-    IDENTIFIER { 
+    expression { 
         $$ = create_block_node($1, 1); 
     }
-    | args ',' IDENTIFIER {
-        int count = (*$1).block.statement_count;
-        (*$1).block.statements = realloc((*$1).block.statements, sizeof(ASTNode *) * (count + 1));
-        (*$1).block.statements[count] = $3;
-        (*$1).block.statement_count++;
+    | args ',' expression {
+        int count = node_list_count($1);
+        $1[count] = $3;
+        $1[count + 1] = NULL;
         $$ = $1;
     }
 ;
