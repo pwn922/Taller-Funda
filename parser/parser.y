@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
 extern FILE *yyin;
 void yyerror(const char *s);
 int yylex(void);
@@ -12,6 +10,7 @@ int yylex(void);
 #define MAX_VARIABLES 100
 #define MAX_FUNCTIONS 100
 #define MAX_PARAMETERS 10
+#define YYDEBUG 1
 
 //Estructura para variables
 typedef struct {
@@ -107,7 +106,7 @@ typedef struct ASTNode {
     };
 } ASTNode;
 Function *get_function(const char *name);  // Declarar funciones
-int evaluate_ast(ASTNode *node);
+//int evaluate_ast(ASTNode *node);
 void add_function(Function func);
 
 
@@ -274,6 +273,7 @@ ASTNode *create_while_node(ASTNode *condition, ASTNode *body) {
 
 void free_ast(ASTNode *node) {
     if (node == NULL) return;
+    fprintf(stderr, "Liberando nodo de tipo: %d\n", node->type);
 
     switch (node->type) {
         case NODE_TYPE_NUMBER:
@@ -313,8 +313,32 @@ void free_ast(ASTNode *node) {
             free_ast(node->for_stmt.increment);
             free_ast(node->for_stmt.body);
             break;
+        case NODE_TYPE_CALL:
+        free(node->call.name);
+        for (int i = 0; i < node->call.arg_count; i++) {
+            free_ast(node->call.args[i]);
+        }
+    free(node->call.args);
+    break;
+        case NODE_TYPE_RETURN:
+        free_ast(node->return_stmt.expression);
+        break;
+        case NODE_TYPE_FUNCTION:
+        free(node->function.name);
+        for (int i = 0; i < node->function.param_count; i++) {
+            free_ast(node->function.parameters[i]);
+        }
+        free_ast(node->function.body);
+        free(node->function.parameters);
+        break;
+
+        case NODE_TYPE_STRING:
+            free(node->string_value); // Liberar cadena
+            break;
+
+    
         default:
-            fprintf(stderr, "Error: Unknown ASTNode type.\n");
+            fprintf(stderr, "Error: Unknown ASTNode type.\n", node->type);
             break;
     }
     free(node);
@@ -369,6 +393,8 @@ int evaluate_ast(ASTNode *node) {
         return 0; // Retorna 0 si el nodo es NULL.
     }
 
+    fprintf(stderr, "Evaluando nodo de tipo: %d\n", node->type);
+
     switch (node->type) {
         case NODE_TYPE_NUMBER:
             return node->value;
@@ -401,6 +427,7 @@ int evaluate_ast(ASTNode *node) {
             }
         }
 
+
         case NODE_TYPE_ASSIGN: {
             int value = evaluate_ast(node->assignment.value);
             set_variable_value(node->assignment.name, value);
@@ -409,6 +436,10 @@ int evaluate_ast(ASTNode *node) {
 
         case NODE_TYPE_VARIABLE:
             return create_variable(node->name);
+        
+        case NODE_TYPE_FUNCTION:
+        fprintf(stderr, "Error: Evaluación directa de una función no implementada.\n");
+        return 0;
 
         case NODE_TYPE_IF: {
             int condition_value = evaluate_ast(node->if_stmt.condition);
@@ -452,7 +483,7 @@ int evaluate_ast(ASTNode *node) {
             return evaluate_ast(node->return_stmt.expression);
 
         default:
-            fprintf(stderr, "Error: Tipo de nodo desconocido.\n");
+            fprintf(stderr, "Error: Tipo de nodo desconocido.\n", node->type);
             return 0;
     }
 }
@@ -639,8 +670,14 @@ void yyerror(const char *s) {
 
 // Función principal
 int main(int argc, char *argv[]) {
+    extern int yydebug;
+    yydebug = 1;
     if (argc > 1) {
         yyin = fopen(argv[1], "r");
+        if (!yyin) {
+            perror(argv[1]);
+            return 1;
+        }
     } else {
         yyin = stdin;
     }
