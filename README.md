@@ -1,4 +1,4 @@
-# Documentación: Taller de Fundamentos: Creación de un Compilador para un Lenguaje Propio
+# Documentación: Taller de Fundamentos - Creación de un Compilador para un Lenguaje Propio
 
 ## Herramientas Utilizadas
 
