@@ -10,7 +10,6 @@ int yylex(void);
 #define MAX_VARIABLES 100
 #define MAX_FUNCTIONS 100
 #define MAX_PARAMETERS 10
-#define YYDEBUG 1
 
 //Estructura para variables
 typedef struct {
@@ -106,7 +105,8 @@ typedef struct ASTNode {
     };
 } ASTNode;
 Function *get_function(const char *name);  // Declarar funciones
-//int evaluate_ast(ASTNode *node);
+int evaluate_ast(ASTNode *node);
+void free_ast(ASTNode *node);
 void add_function(Function func);
 
 
@@ -142,6 +142,24 @@ ASTNode *create_function_node(char *name, ASTNode **parameters, int param_count,
     node->function.param_count = param_count;
     node->function.body = body;
     return node;
+}
+
+ASTNode **create_node_list(ASTNode *first) {
+    ASTNode **list = malloc(2 * sizeof(ASTNode *));
+    list[0] = first;
+    list[1] = NULL; // Terminador para el arreglo
+    return list;
+}
+
+ASTNode **append_node_list(ASTNode **list, ASTNode *new_node) {
+    int count = 0;
+    while (list[count] != NULL) { // Calcula el tamaño actual de la lista
+        count++;
+    }
+    list = realloc(list, (count + 2) * sizeof(ASTNode *)); // +1 para el nuevo nodo, +1 para NULL
+    list[count] = new_node;
+    list[count + 1] = NULL; // Actualiza el terminador
+    return list;
 }
 
 ASTNode *create_variable_node(char *name) {
@@ -332,6 +350,10 @@ void free_ast(ASTNode *node) {
         free(node->function.parameters);
         break;
 
+        case NODE_TYPE_VARIABLE:
+        free(node->name);
+        break;
+
         case NODE_TYPE_STRING:
             free(node->string_value); // Liberar cadena
             break;
@@ -369,6 +391,8 @@ void set_variable_value(char *name, int value) {
 // Evaluación de funciones
 int evaluate_function_call(ASTNode *call_node) {
     Function *func = get_function(call_node->call.name);
+    fprintf(stderr, "Debug: La función '%s' esperaba %d argumentos y recibió %d.\n",
+        call_node->call.name, func->param_count, call_node->call.arg_count);
     if (!func) {
         fprintf(stderr, "Error: Función '%s' no definida.\n", call_node->call.name);
         return 0;
@@ -377,6 +401,17 @@ int evaluate_function_call(ASTNode *call_node) {
         fprintf(stderr, "Error: Número incorrecto de argumentos para '%s'.\n", func->name);
         return 0;
     }
+
+    // Depuración: lista de argumentos
+    for (int i = 0; i < func->param_count; i++) {
+    fprintf(stderr, "Parámetro %d: %s\n", i, func->parameters[i]->name);
+}
+    
+    for (int i = 0; i < call_node->call.arg_count; i++) {
+        fprintf(stderr, "  Argumento %d: %d\n", i, evaluate_ast(call_node->call.args[i]));
+    }
+
+    fprintf(stderr, "Debug: Evaluando llamada a '%s' con %d argumentos.\n", call_node->call.name, call_node->call.arg_count);
 
     // Evaluar argumentos y asignar a parámetros
     for (int i = 0; i < func->param_count; i++) {
@@ -435,7 +470,7 @@ int evaluate_ast(ASTNode *node) {
         }
 
         case NODE_TYPE_VARIABLE:
-            return create_variable(node->name);
+            return get_variable_value(node->name);
         
         case NODE_TYPE_FUNCTION:
         fprintf(stderr, "Error: Evaluación directa de una función no implementada.\n");
@@ -650,15 +685,8 @@ call:
 ;
 
 args:
-    expression { 
-        $$ = create_block_node($1, 1); 
-    }
-    | args ',' expression {
-        int count = node_list_count($1);
-        $1[count] = $3;
-        $1[count + 1] = NULL;
-        $$ = $1;
-    }
+    expression { $$ = create_node_list($1); }
+    | args ',' expression { $$ = append_node_list($1, $3); }
 ;
 
 %%
@@ -670,14 +698,8 @@ void yyerror(const char *s) {
 
 // Función principal
 int main(int argc, char *argv[]) {
-    extern int yydebug;
-    yydebug = 1;
     if (argc > 1) {
         yyin = fopen(argv[1], "r");
-        if (!yyin) {
-            perror(argv[1]);
-            return 1;
-        }
     } else {
         yyin = stdin;
     }

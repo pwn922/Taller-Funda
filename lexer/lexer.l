@@ -18,7 +18,6 @@
 
 [0-9]+        { yylval.ival = atoi(yytext); return NUMBER; }
 [a-zA-Z_][a-zA-Z_0-9]*   { yylval.sval = strdup(yytext); return IDENTIFIER; }
-"function"    { printf("FUNCTION\n"); return FUNCTION; }
 
 "=="          { return EQUAL; }
 "!="          { return NOT_EQUAL; }
