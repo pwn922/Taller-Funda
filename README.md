@@ -109,20 +109,24 @@ El archivo `parser.y` tiene una estructura dividida en varias secciones:
 
 1. Definición de la gramática: Aquí se definen las reglas de producción que determinan cómo se forman las construcciones del lenguaje, como asignaciones, condicionales, bucles, etc. Estas reglas procesan las entradas y las convierten en nodos del AST.
 2. Representación del AST: El AST se representa mediante la estructura ASTNode, que puede tener varios tipos de nodos, incluyendo:
-    - Nodo de valor: Almacena valores constantes.
+    - Nodo de número: Representa valores numéricos constantes.
     - Nodo de identificador: Representa nombres de variables.
-    - Nodo de operación binaria: Representa operaciones como suma o resta.
-    - Nodo de asignación: Representa asignaciones de variables.
-    - Nodo de condicional (`if`): Representa sentencias condicionales (con o sin `else`).
-    - Nodo de bloque: Representa bloques de sentencias.
-    - Nodos de bucles (`while`, `for`): Representan bucles `while` o `for`.
-    - Nodo de impresión: Representa sentencias print.
-    - Funciones de creación de nodos: Varias funciones, como `create_for_node`, `create_number_node`, y `create_identifier_node`, son utilizadas para crear nuevos nodos en el AST.
+    - Nodo de operación binaria: Representa operaciones matemáticas o lógicas.
+    - Nodo de asignación: Representa una asignación de valor a una variable.
+    - Nodo condicional (`if`): Representa sentencias condicionales con soporte para `else`
+    - Nodo de bucle `while`: Representa un bucle condicional
+    - Nodo de bucle `for`: Representa un bucle con inicialización, condición e incremento.
+    - Nodo de bloque: Representa un conjunto de sentencias agrupadas.
+    - Nodo de impresión: Representa una sentencia de impresión (`print`)
+    - Nodo de función: Representa la declaración de funciones.
+        - Nodo de llamada a función: Representa una invocación de función
+        - Nodo de retorno: Representa una sentencia return con una expresión opcional.
+    - Funciones de creación de nodos: Varias funciones, como `create_for_node`, `create_number_node`, `create_identifier_node`, `create_function_node`, entre otras, son utilizadas para crear nuevos nodos en el AST.
 3. Gestión de memoria: Cada nodo del AST es asignado dinámicamente con malloc, y se ha implementado la función `free_ast` para liberar recursivamente todos los nodos del AST, evitando pérdidas de memoria.
 4. Evaluación de expresiones: La función `evaluate_ast` evalúa recursivamente el AST, interpretando las expresiones representadas por cada nodo. Esta función maneja nodos de tipo número, identificador, operaciones binarias, asignaciones y estructuras de control como `if`, `while` y `for`. Además, soporta operaciones básicas como suma, resta, multiplicación, división, comparaciones (`==`, `!=`, `>`, `<`) y operaciones lógicas.
 5. Gestión de variables: Se utiliza un arreglo global variables para almacenar los nombres de las variables y sus valores correspondientes. Las funciones `get_variable_value` y `set_variable_value` se encargan de gestionar el acceso y la actualización de las variables.
 6. Ejecución: La función `execute_ast` se encarga de ejecutar las sentencias del AST, procesando asignaciones, sentencias de impresión, condicionales, bucles y bloques de código.
-7. Grammática de Bison: En el archivo `parser.y`, Bison define la gramática y cómo se deben parsear las entradas para construir los nodos del AST:
+7. Grammática de Bison: En el archivo `parser.y`, Bison define la gramática y cómo se deben parsear las entradas para construir los nodos del AST.
 8. Programa: La regla principal procesa las líneas del programa.
 
 ## Instrucciones de uso:
