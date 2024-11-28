@@ -6,6 +6,7 @@
 %%
 
 "var"         { return VAR; }
+"set"         { return SET; }
 "if"          { return IF; }
 "else"        { return ELSE; }
 "print"       { return PRINT; }
@@ -26,6 +27,7 @@
 "<="          { return LESS_EQUAL; }
 ">="          { return GREATER_EQUAL; }
 "="           { return ASSIGN; }
+"<-"          { return LEFT_ARROW; }
 "("           { return '('; }
 ")"           { return ')'; }
 "{"           { return '{'; }

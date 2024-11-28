@@ -1,0 +1,7 @@
+var a = 5;
+set b <- 10;
+set c <- a + b;
+
+print(a);
+print(b);
+print(c);

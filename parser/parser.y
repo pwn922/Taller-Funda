@@ -291,7 +291,7 @@ ASTNode *create_while_node(ASTNode *condition, ASTNode *body) {
 
 void free_ast(ASTNode *node) {
     if (node == NULL) return;
-    fprintf(stderr, "Liberando nodo de tipo: %d\n", node->type);
+    // fprintf(stderr, "Liberando nodo de tipo: %d\n", node->type);
 
     switch (node->type) {
         case NODE_TYPE_NUMBER:
@@ -403,15 +403,15 @@ int evaluate_function_call(ASTNode *call_node) {
     }
 
     // Depuración: lista de argumentos
-    for (int i = 0; i < func->param_count; i++) {
-    fprintf(stderr, "Parámetro %d: %s\n", i, func->parameters[i]->name);
-}
+    // for (int i = 0; i < func->param_count; i++) {
+    // fprintf(stderr, "Parámetro %d: %s\n", i, func->parameters[i]->name);
+    // }
     
-    for (int i = 0; i < call_node->call.arg_count; i++) {
-        fprintf(stderr, "  Argumento %d: %d\n", i, evaluate_ast(call_node->call.args[i]));
-    }
+    // for (int i = 0; i < call_node->call.arg_count; i++) {
+    //    fprintf(stderr, "  Argumento %d: %d\n", i, evaluate_ast(call_node->call.args[i]));
+    // }
 
-    fprintf(stderr, "Debug: Evaluando llamada a '%s' con %d argumentos.\n", call_node->call.name, call_node->call.arg_count);
+    // fprintf(stderr, "Debug: Evaluando llamada a '%s' con %d argumentos.\n", call_node->call.name, call_node->call.arg_count);
 
     // Evaluar argumentos y asignar a parámetros
     for (int i = 0; i < func->param_count; i++) {
@@ -428,7 +428,7 @@ int evaluate_ast(ASTNode *node) {
         return 0; // Retorna 0 si el nodo es NULL.
     }
 
-    fprintf(stderr, "Evaluando nodo de tipo: %d\n", node->type);
+    // fprintf(stderr, "Evaluando nodo de tipo: %d\n", node->type);
 
     switch (node->type) {
         case NODE_TYPE_NUMBER:
@@ -473,8 +473,8 @@ int evaluate_ast(ASTNode *node) {
             return get_variable_value(node->name);
         
         case NODE_TYPE_FUNCTION:
-        fprintf(stderr, "Error: Evaluación directa de una función no implementada.\n");
-        return 0;
+            // fprintf(stderr, "Error: Evaluación directa de una función no implementada.\n");
+            return 0;
 
         case NODE_TYPE_IF: {
             int condition_value = evaluate_ast(node->if_stmt.condition);
@@ -583,7 +583,7 @@ void execute_ast(ASTNode *node) {
 %token <ival> NUMBER
 %token FUNCTION RETURN
 %token WHILE FOR IF ELSE PRINT TRUE FALSE VAR
-%token EQUAL NOT_EQUAL LESS GREATER LESS_EQUAL GREATER_EQUAL ASSIGN
+%token EQUAL NOT_EQUAL LESS GREATER LESS_EQUAL GREATER_EQUAL ASSIGN SET LEFT_ARROW
 
 %type <node> expression line block statement_list program function_decl call
 %type <node_list> args
@@ -607,8 +607,10 @@ program:
 
 line:
     VAR IDENTIFIER ';' { $$ = create_variable_node($2); }
+    | SET IDENTIFIER ';' { $$ = create_variable_node($2); }
     | VAR IDENTIFIER ASSIGN expression ';' { $$ = create_assignment_node($2, $4); }
     | IDENTIFIER ASSIGN expression ';' { $$ = create_assignment_node($1, $3); }
+    | SET IDENTIFIER LEFT_ARROW expression ';' { $$ = create_assignment_node($2, $4); }
     | call ';' { execute_ast($1); free_ast($1); }
     | RETURN expression ';' { $$ = create_return_node($2); }
     | IF '(' expression ')' block
@@ -628,7 +630,6 @@ line:
         ASTNode *increment = create_assignment_node($4, $12);
         $$ = create_for_node(init, $8, increment, $14);
     }
-
     | PRINT '(' expression ')' ';' { $$ = create_print_node($3); }
 ;
 
@@ -707,4 +708,3 @@ int main(int argc, char *argv[]) {
     yyparse();
     return 0;
 }
-

@@ -29,6 +29,16 @@ var x = 10;
 var y = x - 5;
 ```
 
+#### Sintaxis personalizada
+
+También es posible declarar variables utilizando una sintaxis diferente. La nueva sintaxis emplea la palabra clave `set` junto con el nombre de la variable, el operador `<-`, y el `valor`:
+
+```
+set c <- 5;
+print(c);
+```
+
+
 ### Condiciones
 
 El lenguaje permite evaluar condiciones lógicas utilizando if y else. Estas estructuras condicionales permiten ejecutar diferentes bloques de código según si la condición evaluada es verdadera o falsa.
