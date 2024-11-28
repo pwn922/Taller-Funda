@@ -143,18 +143,9 @@ El archivo `parser.y` tiene una estructura dividida en varias secciones:
 
 ### Crear carpeta output
 
-#### CMD
-
 ```
-mkdir output
+mkdir output && mkdir bin
 ```
-
-#### Powershell (Alternativa)
-
-```
-New-Item -ItemType Directory -Name output
-```
-
 
 ### Generar el analizador léxico (Lexer): 
 
