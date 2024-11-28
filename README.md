@@ -76,6 +76,19 @@ for (var j = 0; j < 5; j = j + 1) {
 }
 ```
 
+### Funciones
+
+Las funciones son bloques de código reutilizables que permiten organizar y simplificar el desarrollo. En el lenguaje, una función se define utilizando la palabra clave `function`, seguida del nombre de la función, parámetros entre paréntesis, y el bloque de código entre llaves.
+
+```
+function suma(a, b) {
+    return a + b;
+}
+var resultado;
+resultado = suma(5, 7);
+print(resultado);
+```
+
 ## Fases del Compilador
 
 ### Análisis Léxico (Flex)
